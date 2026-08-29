@@ -53,11 +53,7 @@ pub fn percentile(xs: &[f64], p: f64) -> f64 {
 /// population variance, i.e. `sqrt(sum((x - mean)^2) / n)`. This matches
 /// `variance` (population, divisor `n`). Panics on empty input.
 pub fn stddev(xs: &[f64]) -> f64 {
-    assert!(!xs.is_empty(), "stddev of empty slice");
-    let m = mean(xs);
-    let ss: f64 = xs.iter().map(|x| (x - m) * (x - m)).sum();
-    let n = xs.len() as f64;
-    (ss / (n - 1.0)).sqrt()
+    variance(xs).sqrt()
 }
 
 #[cfg(test)]
@@ -68,6 +64,16 @@ mod tests {
     fn stddev_constant_is_zero() {
         // Constant data has zero spread under any divisor.
         assert!(stddev(&[3.0, 3.0, 3.0, 3.0]).abs() < 1e-9);
+    }
+
+    #[test]
+    fn stddev_population() {
+        // Population stddev = sqrt(population variance) (divisor n, not n-1).
+        assert!((stddev(&[1.0, 2.0, 3.0]) - (2.0f64 / 3.0).sqrt()).abs() < 1e-9);
+        assert!((stddev(&[2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0]) - 2.0).abs() < 1e-9);
+        // Consistency with variance for arbitrary data.
+        let xs = [3.5, 1.2, 8.9, 4.4, 0.1];
+        assert!((stddev(&xs) - variance(&xs).sqrt()).abs() < 1e-9);
     }
 
     #[test]

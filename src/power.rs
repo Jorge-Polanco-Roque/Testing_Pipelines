@@ -1,7 +1,5 @@
 //! Power-average helpers: the root mean square (quadratic mean).
 
-use crate::measures::mean;
-
 /// Root mean square (quadratic mean) of the slice: the square root of the mean
 /// of the squares, `sqrt((1/n) * sum(x_i^2))`.
 ///
@@ -11,9 +9,8 @@ use crate::measures::mean;
 /// absolute value of the arithmetic mean. Panics on empty input.
 pub fn root_mean_square(xs: &[f64]) -> f64 {
     assert!(!xs.is_empty(), "root_mean_square of empty slice");
-    let m = mean(xs);
-    let mean_sq_dev: f64 = xs.iter().map(|x| (x - m) * (x - m)).sum::<f64>() / xs.len() as f64;
-    mean_sq_dev.sqrt()
+    let mean_sq: f64 = xs.iter().map(|x| x * x).sum::<f64>() / xs.len() as f64;
+    mean_sq.sqrt()
 }
 
 #[cfg(test)]
@@ -39,6 +36,37 @@ mod tests {
     fn rms_nonnegative() {
         // The RMS is a magnitude and can never be negative.
         assert!(root_mean_square(&[-4.0, 4.0, -1.0, 1.0]) >= 0.0);
+    }
+
+    #[test]
+    fn rms_non_zero_mean() {
+        // Regression: RMS must depend only on magnitudes, not on the mean.
+        assert!((root_mean_square(&[3.0, 4.0]) - (12.5_f64).sqrt()).abs() < 1e-9);
+        // Constant data [c; n] -> RMS is |c|.
+        assert!((root_mean_square(&[5.0, 5.0, 5.0]) - 5.0).abs() < 1e-9);
+        // Single value -> its magnitude.
+        assert!((root_mean_square(&[-7.0]) - 7.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn rms_dominates_abs_mean() {
+        // Invariant for any data: RMS >= |arithmetic mean|.
+        let cases: &[&[f64]] = &[
+            &[3.0, 4.0],
+            &[5.0, 5.0, 5.0],
+            &[-7.0],
+            &[1000.0, 1000.1, 999.9], // large shifted mean
+            &[-2.0, 8.0, 3.0, -5.0],
+        ];
+        for xs in cases {
+            let rms = root_mean_square(xs);
+            let mean = xs.iter().sum::<f64>() / xs.len() as f64;
+            assert!(
+                rms + 1e-9 >= mean.abs(),
+                "RMS {rms} < |mean| {} for {xs:?}",
+                mean.abs()
+            );
+        }
     }
 
     #[test]

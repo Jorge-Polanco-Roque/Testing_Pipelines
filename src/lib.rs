@@ -45,7 +45,7 @@ pub fn percentile(xs: &[f64], p: f64) -> f64 {
     let rank = p / 100.0 * (v.len() - 1) as f64;
     let lo = rank.floor() as usize;
     let hi = rank.ceil() as usize;
-    let frac = rank.ceil() - rank;
+    let frac = rank - rank.floor();
     v[lo] + frac * (v[hi] - v[lo])
 }
 
@@ -108,6 +108,17 @@ mod tests {
     fn percentile_matches_median_odd() {
         let xs = [3.0, 1.0, 2.0];
         assert!((percentile(&xs, 50.0) - median(&xs)).abs() < 1e-9);
+    }
+
+    #[test]
+    fn percentile_interpolated() {
+        // Ranks fall between indices; results must interpolate linearly.
+        let xs = [1.0, 2.0, 3.0, 4.0];
+        assert!((percentile(&xs, 25.0) - 1.75).abs() < 1e-9);
+        assert!((percentile(&xs, 50.0) - 2.5).abs() < 1e-9);
+        assert!((percentile(&xs, 75.0) - 3.25).abs() < 1e-9);
+        let ys = [10.0, 20.0, 30.0, 40.0, 50.0];
+        assert!((percentile(&ys, 90.0) - 46.0).abs() < 1e-9);
     }
 
     #[test]

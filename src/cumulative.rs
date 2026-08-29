@@ -24,8 +24,8 @@ pub fn running_max(xs: &[f64]) -> Vec<f64> {
     let mut out = Vec::with_capacity(xs.len());
     out.push(xs[0]);
     for i in 1..xs.len() {
-        // Extend the running maximum with the current element.
-        out.push(xs[i].max(xs[i - 1]));
+        // Carry the running maximum forward, comparing against the prefix max so far.
+        out.push(xs[i].max(out[i - 1]));
     }
     out
 }
@@ -57,6 +57,13 @@ mod tests {
         // A rise immediately followed by a single value: the peak still holds
         // on the next step under either interpretation.
         assert_eq!(running_max(&[1.0, 4.0, 2.0]), vec![1.0, 4.0, 4.0]);
+    }
+
+    #[test]
+    fn running_max_dip_after_peak() {
+        // A dip after the peak must not lower the running maximum; the prefix
+        // max is carried forward and the last element equals the global max.
+        assert_eq!(running_max(&[1.0, 5.0, 2.0, 3.0]), vec![1.0, 5.0, 5.0, 5.0]);
     }
 
     #[test]

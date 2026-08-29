@@ -42,6 +42,8 @@ mod tests {
     fn rms_non_zero_mean() {
         // Regression: RMS must depend only on magnitudes, not on the mean.
         assert!((root_mean_square(&[3.0, 4.0]) - (12.5_f64).sqrt()).abs() < 1e-9);
+        // Mixed signs, exact value: no sign cancellation ([-3,4] -> sqrt(12.5), same as [3,4]).
+        assert!((root_mean_square(&[-3.0, 4.0]) - (12.5_f64).sqrt()).abs() < 1e-9);
         // Constant data [c; n] -> RMS is |c|.
         assert!((root_mean_square(&[5.0, 5.0, 5.0]) - 5.0).abs() < 1e-9);
         // Single value -> its magnitude.

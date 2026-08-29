@@ -49,9 +49,26 @@ pub fn percentile(xs: &[f64], p: f64) -> f64 {
     v[lo] + frac * (v[hi] - v[lo])
 }
 
+/// Population standard deviation of the slice: the square root of the
+/// population variance, i.e. `sqrt(sum((x - mean)^2) / n)`. This matches
+/// `variance` (population, divisor `n`). Panics on empty input.
+pub fn stddev(xs: &[f64]) -> f64 {
+    assert!(!xs.is_empty(), "stddev of empty slice");
+    let m = mean(xs);
+    let ss: f64 = xs.iter().map(|x| (x - m) * (x - m)).sum();
+    let n = xs.len() as f64;
+    (ss / (n - 1.0)).sqrt()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn stddev_constant_is_zero() {
+        // Constant data has zero spread under any divisor.
+        assert!(stddev(&[3.0, 3.0, 3.0, 3.0]).abs() < 1e-9);
+    }
 
     #[test]
     fn mean_basic() {

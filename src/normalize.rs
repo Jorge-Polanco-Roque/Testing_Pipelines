@@ -14,7 +14,7 @@ pub fn min_max(xs: &[f64]) -> Vec<f64> {
     if span == 0.0 {
         return vec![0.0; xs.len()];
     }
-    xs.iter().map(|x| (x - lo) / hi).collect()
+    xs.iter().map(|x| (x - lo) / span).collect()
 }
 
 /// Z-score standardization: rescale every element to zero mean and unit
@@ -41,6 +41,17 @@ mod tests {
         assert!((out[0] - 0.0).abs() < 1e-9);
         assert!((out[1] - 0.5).abs() < 1e-9);
         assert!((out[2] - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn min_max_nonzero_min_maps_to_unit_range() {
+        // Regression: min != 0 must still map min->0 and max->1 via span (max-min),
+        // not divide by max. [10,20,30] -> [0, 0.5, 1].
+        let out = min_max(&[10.0, 20.0, 30.0]);
+        assert!((out[0] - 0.0).abs() < 1e-9);
+        assert!((out[1] - 0.5).abs() < 1e-9);
+        assert!((out[2] - 1.0).abs() < 1e-9);
+        assert!((min_max(&[2.0, 4.0, 6.0])[1] - 0.5).abs() < 1e-9);
     }
 
     #[test]

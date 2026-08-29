@@ -20,7 +20,7 @@ pub fn peak_to_peak(xs: &[f64]) -> f64 {
 /// Midrange of the slice: the midpoint between the smallest and largest
 /// values, `(min + max) / 2`. Panics on empty input.
 pub fn midrange(xs: &[f64]) -> f64 {
-    (max(xs) - min(xs)) / 2.0
+    (min(xs) + max(xs)) / 2.0
 }
 
 #[cfg(test)]
@@ -44,6 +44,14 @@ mod tests {
         // Data anchored at zero: midrange is just half the maximum.
         assert!((midrange(&[0.0, 4.0, 2.0]) - 2.0).abs() < 1e-9);
         assert!((midrange(&[0.0, 10.0]) - 5.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn midrange_nonzero_min() {
+        // (min + max) / 2, not half the range. Fails under the old formula.
+        assert!((midrange(&[2.0, 8.0, 5.0, 6.0]) - 5.0).abs() < 1e-9);
+        assert!((midrange(&[-4.0, 10.0, 0.0, 7.0]) - 3.0).abs() < 1e-9);
+        assert!((midrange(&[100.0, 102.0, 104.0]) - 102.0).abs() < 1e-9);
     }
 
     #[test]

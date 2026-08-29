@@ -29,6 +29,26 @@ pub fn variance(xs: &[f64]) -> f64 {
     ss / xs.len() as f64
 }
 
+/// Linear-interpolated percentile of the slice (the `linear` / numpy-default
+/// method). `p` is a percentile in `[0.0, 100.0]`. The virtual rank is
+/// `r = p/100 * (n - 1)`; the result interpolates linearly between the values
+/// at `floor(r)` and `ceil(r)`. `percentile(xs, 50.0)` equals the median.
+/// Panics on empty input or when `p` is outside `[0.0, 100.0]`.
+pub fn percentile(xs: &[f64], p: f64) -> f64 {
+    assert!(!xs.is_empty(), "percentile of empty slice");
+    assert!((0.0..=100.0).contains(&p), "percentile p out of range");
+    let mut v = xs.to_vec();
+    v.sort_by(f64::total_cmp);
+    if v.len() == 1 {
+        return v[0];
+    }
+    let rank = p / 100.0 * (v.len() - 1) as f64;
+    let lo = rank.floor() as usize;
+    let hi = rank.ceil() as usize;
+    let frac = rank.ceil() - rank;
+    v[lo] + frac * (v[hi] - v[lo])
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -66,5 +86,33 @@ mod tests {
     fn median_even() {
         assert!((median(&[1.0, 2.0, 3.0, 4.0]) - 2.5).abs() < 1e-9);
         assert!((median(&[10.0, 2.0, 8.0, 4.0]) - 6.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn percentile_endpoints() {
+        let xs = [1.0, 2.0, 3.0, 4.0, 5.0];
+        assert!((percentile(&xs, 0.0) - 1.0).abs() < 1e-9);
+        assert!((percentile(&xs, 100.0) - 5.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn percentile_exact_index() {
+        // n = 5, so ranks land exactly on integer indices for these percentiles.
+        let xs = [5.0, 1.0, 4.0, 2.0, 3.0];
+        assert!((percentile(&xs, 25.0) - 2.0).abs() < 1e-9);
+        assert!((percentile(&xs, 50.0) - 3.0).abs() < 1e-9);
+        assert!((percentile(&xs, 75.0) - 4.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn percentile_matches_median_odd() {
+        let xs = [3.0, 1.0, 2.0];
+        assert!((percentile(&xs, 50.0) - median(&xs)).abs() < 1e-9);
+    }
+
+    #[test]
+    #[should_panic]
+    fn percentile_empty_panics() {
+        percentile(&[], 50.0);
     }
 }

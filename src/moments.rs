@@ -19,10 +19,9 @@ pub fn skewness(xs: &[f64]) -> f64 {
     if s == 0.0 {
         return 0.0;
     }
-    // BUG: the third central moment must be the *mean* of the cubed deviations,
-    // i.e. divided by n. This omits the `/ n`, so the magnitude of the skewness
-    // is scaled by n. Symmetric data (sum of cubed deviations == 0) hides it.
-    let m3: f64 = xs.iter().map(|x| (x - m).powi(3)).sum();
+    // Third central moment: the *mean* of the cubed deviations (divisor n).
+    let n = xs.len() as f64;
+    let m3: f64 = xs.iter().map(|x| (x - m).powi(3)).sum::<f64>() / n;
     m3 / s.powi(3)
 }
 
@@ -41,6 +40,15 @@ mod tests {
     #[test]
     fn skewness_constant_is_zero() {
         assert!(skewness(&[7.0, 7.0, 7.0]).abs() < 1e-9);
+    }
+
+    #[test]
+    fn skewness_asymmetric_magnitude() {
+        // Regression: without the `/ n` on the third central moment these are
+        // inflated by a factor of n.
+        assert!((skewness(&[0.0, 0.0, 0.0, 0.0, 10.0]) - 1.5).abs() < 1e-9);
+        assert!((skewness(&[2.0, 2.0, 2.0, 8.0]) - 1.1547005383792515).abs() < 1e-9);
+        assert!((skewness(&[1.0, 1.0, 1.0, 1.0, 1.0, 7.0]) - 1.7888543819998317).abs() < 1e-9);
     }
 
     #[test]

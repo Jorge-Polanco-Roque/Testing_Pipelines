@@ -20,6 +20,15 @@ pub fn median(xs: &[f64]) -> f64 {
     }
 }
 
+/// Population variance of the slice: the mean of the squared deviations from
+/// the mean, i.e. `sum((x - mean)^2) / n`. Panics on empty input.
+pub fn variance(xs: &[f64]) -> f64 {
+    assert!(!xs.is_empty(), "variance of empty slice");
+    let m = mean(xs);
+    let ss: f64 = xs.iter().map(|x| (x - m) * (x - m)).sum();
+    ss / (xs.len() - 1) as f64
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -27,6 +36,12 @@ mod tests {
     #[test]
     fn mean_basic() {
         assert!((mean(&[1.0, 2.0, 3.0]) - 2.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn variance_constant() {
+        // All equal values have zero variance under any correct definition.
+        assert!(variance(&[7.0, 7.0, 7.0, 7.0]).abs() < 1e-9);
     }
 
     #[test]

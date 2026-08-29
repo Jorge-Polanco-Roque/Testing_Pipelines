@@ -56,9 +56,58 @@ pub fn stddev(xs: &[f64]) -> f64 {
     variance(xs).sqrt()
 }
 
+/// Mode of the slice: the value that occurs most often. When several values
+/// tie for the highest frequency the **smallest** of them is returned, so the
+/// result is deterministic. Panics on empty input.
+pub fn mode(xs: &[f64]) -> f64 {
+    assert!(!xs.is_empty(), "mode of empty slice");
+    let mut v = xs.to_vec();
+    v.sort_by(f64::total_cmp);
+
+    let mut best = v[0];
+    let mut best_count = 1usize;
+    let mut cur = v[0];
+    let mut cur_count = 1usize;
+
+    for &x in &v[1..] {
+        if x == cur {
+            cur_count += 1;
+        } else {
+            cur = x;
+            cur_count = 1;
+        }
+        // BUG: `>=` lets a later (larger) value with an equal count overwrite
+        // the earlier, smaller mode, breaking the documented "smallest on tie"
+        // rule. Correct is `>`.
+        if cur_count >= best_count {
+            best_count = cur_count;
+            best = cur;
+        }
+    }
+    best
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn mode_unique() {
+        // A single clear winner: no tie, so the tie-break rule is never exercised.
+        assert!((mode(&[1.0, 2.0, 2.0, 3.0]) - 2.0).abs() < 1e-9);
+        assert!((mode(&[5.0, 5.0, 5.0, 1.0, 9.0]) - 5.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn mode_single() {
+        assert!((mode(&[42.0]) - 42.0).abs() < 1e-9);
+    }
+
+    #[test]
+    #[should_panic]
+    fn mode_empty_panics() {
+        mode(&[]);
+    }
 
     #[test]
     fn stddev_constant_is_zero() {

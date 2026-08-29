@@ -50,6 +50,15 @@ mod tests {
     }
 
     #[test]
+    fn summary_quartiles_ordered_nonneg_iqr() {
+        let s = Summary::of(&[1.0, 2.0, 3.0, 4.0, 5.0]);
+        assert!((s.q1 - 2.0).abs() < 1e-9);
+        assert!((s.q3 - 4.0).abs() < 1e-9);
+        assert!((s.iqr - 2.0).abs() < 1e-9);
+        assert!(s.q1 <= s.q3 && s.iqr >= 0.0);
+    }
+
+    #[test]
     fn summary_format_shape() {
         let s = Summary::of(&[1.0, 2.0, 3.0, 4.0, 5.0]);
         let out = s.format();

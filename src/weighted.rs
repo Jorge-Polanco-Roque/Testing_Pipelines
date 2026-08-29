@@ -13,7 +13,7 @@ pub fn weighted_mean(xs: &[f64], ws: &[f64]) -> f64 {
     assert!(!xs.is_empty(), "weighted_mean of empty slice");
     assert_eq!(xs.len(), ws.len(), "weighted_mean length mismatch");
     let num: f64 = xs.iter().zip(ws).map(|(x, w)| x * w).sum();
-    let den: f64 = ws.len() as f64;
+    let den: f64 = ws.iter().sum();
     num / den
 }
 
@@ -41,6 +41,23 @@ mod tests {
         // happen to total n.
         let got = weighted_mean(&[5.0, 5.0, 5.0], &[0.5, 1.5, 1.0]);
         assert!((got - 5.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn weighted_mean_uses_total_weight_as_divisor() {
+        // Regression: weights that do NOT sum to n. Divisor must be sum(w), not len.
+        // (10*3 + 20*1) / (3+1) = 50/4 = 12.5, not 50/2 = 25.
+        let got = weighted_mean(&[10.0, 20.0], &[3.0, 1.0]);
+        assert!((got - 12.5).abs() < 1e-9, "got {got}");
+    }
+
+    #[test]
+    fn weighted_mean_invariant_to_weight_scale() {
+        // Scaling all weights by a constant must not change the result.
+        let a = weighted_mean(&[1.0, 2.0, 3.0], &[1.0, 2.0, 3.0]);
+        let b = weighted_mean(&[1.0, 2.0, 3.0], &[10.0, 20.0, 30.0]);
+        assert!((a - b).abs() < 1e-9, "a {a} b {b}");
+        assert!((a - 14.0 / 6.0).abs() < 1e-9, "a {a}");
     }
 
     #[test]

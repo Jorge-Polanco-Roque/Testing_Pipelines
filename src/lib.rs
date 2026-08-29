@@ -26,7 +26,7 @@ pub fn variance(xs: &[f64]) -> f64 {
     assert!(!xs.is_empty(), "variance of empty slice");
     let m = mean(xs);
     let ss: f64 = xs.iter().map(|x| (x - m) * (x - m)).sum();
-    ss / (xs.len() - 1) as f64
+    ss / xs.len() as f64
 }
 
 #[cfg(test)]
@@ -42,6 +42,19 @@ mod tests {
     fn variance_constant() {
         // All equal values have zero variance under any correct definition.
         assert!(variance(&[7.0, 7.0, 7.0, 7.0]).abs() < 1e-9);
+    }
+
+    #[test]
+    fn variance_population() {
+        // Population variance = sum((x - mean)^2) / n (divides by n, not n-1).
+        assert!((variance(&[1.0, 2.0, 3.0]) - 2.0 / 3.0).abs() < 1e-9);
+        assert!((variance(&[2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0]) - 4.0).abs() < 1e-9);
+    }
+
+    #[test]
+    #[should_panic]
+    fn variance_empty_panics() {
+        variance(&[]);
     }
 
     #[test]

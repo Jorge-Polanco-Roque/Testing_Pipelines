@@ -6,10 +6,9 @@ pub fn argmin(xs: &[f64]) -> usize {
     assert!(!xs.is_empty(), "argmin of empty slice");
     let mut best = 0usize;
     for i in 1..xs.len() {
-        // BUG: `<=` makes a later element that merely *ties* the current
-        // minimum overwrite the index, returning the last min instead of the
-        // documented first. Correct is `<`.
-        if xs[i] <= xs[best] {
+        // Strict `<` so a later element that only *ties* the current minimum
+        // does not overwrite the index: the first (lowest) index wins.
+        if xs[i] < xs[best] {
             best = i;
         }
     }
@@ -38,6 +37,13 @@ mod tests {
         // Unique minimum: the tie-break rule is never exercised.
         assert_eq!(argmin(&[3.0, 1.0, 4.0, 2.0]), 1);
         assert_eq!(argmin(&[5.0, 6.0, 0.5, 9.0]), 2);
+    }
+
+    #[test]
+    fn argmin_first_of_tie() {
+        // Repeated minimum must yield the first index (regression for #18).
+        assert_eq!(argmin(&[3.0, 1.0, 2.0, 1.0]), 1);
+        assert_eq!(argmin(&[0.0, 0.0, 0.0]), 0);
     }
 
     #[test]

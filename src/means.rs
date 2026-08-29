@@ -9,7 +9,7 @@ pub fn harmonic_mean(xs: &[f64]) -> f64 {
     let n = xs.len() as f64;
     let recip_sum: f64 = xs.iter().map(|x| 1.0 / x).sum();
     // n divided by the sum of the reciprocals.
-    recip_sum / n
+    n / recip_sum
 }
 
 /// Geometric mean of the slice: the `n`-th root of the product of the values,
@@ -32,6 +32,18 @@ mod tests {
         // is 1 regardless of how the divisor is arranged.
         assert!((harmonic_mean(&[1.0, 1.0, 1.0]) - 1.0).abs() < 1e-9);
         assert!((harmonic_mean(&[1.0, 1.0, 1.0, 1.0, 1.0]) - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn harmonic_mean_non_unit_data() {
+        // 3 / (1/1 + 1/2 + 1/4) = 3 / (7/4) = 12/7.
+        assert!((harmonic_mean(&[1.0, 2.0, 4.0]) - 12.0 / 7.0).abs() < 1e-9);
+        // Equal-distance speeds: harmonic mean of 60 and 30 is 40.
+        assert!((harmonic_mean(&[60.0, 30.0]) - 40.0).abs() < 1e-9);
+        // Strictly less than the arithmetic mean for non-constant positive data.
+        let xs = [1.0, 2.0, 4.0];
+        let arithmetic = xs.iter().sum::<f64>() / xs.len() as f64;
+        assert!(harmonic_mean(&xs) < arithmetic);
     }
 
     #[test]

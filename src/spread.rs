@@ -36,7 +36,7 @@ pub fn trimmed_mean(xs: &[f64], frac: f64) -> f64 {
     let k = (frac * n as f64).floor() as usize;
     let core = &v[k..n - k];
     let sum: f64 = core.iter().sum();
-    sum / (n - k) as f64
+    sum / core.len() as f64
 }
 
 #[cfg(test)]
@@ -67,6 +67,16 @@ mod tests {
         // With n = 3 and frac = 0.2 the trim count floors to 0, so again this
         // reduces to the arithmetic mean.
         assert!((trimmed_mean(&[1.0, 2.0, 9.0], 0.2) - 4.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn trimmed_mean_trims_from_both_ends() {
+        // n = 10, frac = 0.1 -> k = 1 trimmed per end; core is 2..=9, mean 5.5.
+        let xs = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
+        assert!((trimmed_mean(&xs, 0.1) - 5.5).abs() < 1e-9);
+        // The extreme outlier gets trimmed, leaving 1..=8, mean 4.5.
+        let ys = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 1000.0];
+        assert!((trimmed_mean(&ys, 0.1) - 4.5).abs() < 1e-9);
     }
 
     #[test]

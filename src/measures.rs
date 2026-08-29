@@ -76,10 +76,9 @@ pub fn mode(xs: &[f64]) -> f64 {
             cur = x;
             cur_count = 1;
         }
-        // BUG: `>=` lets a later (larger) value with an equal count overwrite
-        // the earlier, smaller mode, breaking the documented "smallest on tie"
-        // rule. Correct is `>`.
-        if cur_count >= best_count {
+        // Values are sorted ascending, so on a frequency tie the earlier
+        // (smaller) value must win. Strict `>` keeps the smallest.
+        if cur_count > best_count {
             best_count = cur_count;
             best = cur;
         }
@@ -96,6 +95,12 @@ mod tests {
         // A single clear winner: no tie, so the tie-break rule is never exercised.
         assert!((mode(&[1.0, 2.0, 2.0, 3.0]) - 2.0).abs() < 1e-9);
         assert!((mode(&[5.0, 5.0, 5.0, 1.0, 9.0]) - 5.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn mode_tie_returns_smallest() {
+        // 1.0 and 3.0 both occur twice; the smallest must win.
+        assert!((mode(&[3.0, 1.0, 3.0, 1.0, 2.0]) - 1.0).abs() < 1e-9);
     }
 
     #[test]

@@ -18,8 +18,8 @@ pub fn covariance(xs: &[f64], ys: &[f64]) -> f64 {
     let mx: f64 = xs.iter().sum::<f64>() / n;
     let my: f64 = ys.iter().sum::<f64>() / n;
     let acc: f64 = xs.iter().zip(ys).map(|(x, y)| (x - mx) * (y - my)).sum();
-    // ponytail: population divisor n, matches crate-wide population convention.
-    acc / (n - 1.0)
+    // population divisor n, matches crate-wide population convention.
+    acc / n
 }
 
 #[cfg(test)]
@@ -65,6 +65,14 @@ mod tests {
         let xs = [1.0, 3.0, 2.0, 8.0];
         let ys = [2.0, 1.0, 5.0, 4.0];
         assert!((covariance(&xs, &ys) - covariance(&ys, &xs)).abs() < 1e-9);
+    }
+
+    #[test]
+    fn covariance_population_magnitude() {
+        // Population divisor n: cov(x, x) equals population variance of x.
+        let x = [1.0, 2.0, 3.0, 4.0, 5.0];
+        assert!((covariance(&x, &x) - 2.0).abs() < 1e-9);
+        assert!((covariance(&[1.0, 2.0, 3.0], &[2.0, 4.0, 6.0]) - 4.0 / 3.0).abs() < 1e-9);
     }
 
     #[test]
